@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceMatch: Futuristic TTS Accuracy Game</title>
+  <style>
+    :root {
+      --primary: #6e56cf;
+      --primary-dark: #4c3b99;
+      --accent: #00e5ff;
+      --background: #0a0a1f;
+      --text: #ffffff;
+      --card: #1a1a3a;
+      --success: #00e676;
+      --error: #ff5252;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 90%;
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    
+    h1 {
+      font-size: 3rem;
+      margin: 0;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 10px rgba(110, 86, 207, 0.3);
+    }
+    
+    .subtitle {
+      color: var(--accent);
+      font-size: 1.2rem;
+      margin-top: 0.5rem;
+      font-weight: 300;
+    }
+    
+    .game-container {
+      background-color: var(--card);
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .game-container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(110, 86, 207, 0.1), transparent);
+      animation: shine 5s infinite linear;
+      pointer-events: none;
+    }
+    
+    @keyframes shine {
+      0% {
+        transform: translateX(-50%) translateY(-50%) rotate(0deg);
+      }
+      100% {
+        transform: translateX(-50%) translateY(-50%) rotate(360deg);
+      }
+    }
+    
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .phrase-container {
+      position: relative;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(110, 86, 207, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .phrase {
+      font-size: 1.5rem;
+      line-height: 1.5;
+      margin: 0;
+      text-align: center;
+      min-height: 4.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .difficulty {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    
+    .difficulty button {
+      flex: 1;
+      margin: 0 0.5rem;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .difficulty button:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .difficulty button.active {
+      background-color: var(--primary);
+      box-shadow: 0 0 15px rgba(110, 86, 207, 0.5);
+    }
+    
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .control-row {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    button {
+      flex: 1;
+      padding: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    button:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%, -50%);
+      transform-origin: 50% 50%;
+    }
+    
+    button:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
+    }
+    
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(100, 100);
+        opacity: 0;
+      }
+    }
+    
+    #listenBtn {
+      background-color: var(--accent);
+      color: var(--background);
+    }
+    
+    #listenBtn:hover {
+      background-color: #00b8cc;
+    }
+    
+    #speakBtn {
+      background-color: var(--primary);
+    }
+    
+    #speakBtn.recording {
+      background-color: var(--error);
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+      }
+    }
+    
+    #nextBtn {
+      background-color: #7953d2;
+    }
+    
+    .results {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(110, 86, 207, 0.3);
+      text-align: center;
+      display: none;
+    }
+    
+    .results h3 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+    
+    .score {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--success);
+      margin: 1rem 0;
+    }
+    
+    .feedback {
+      margin-bottom: 1rem;
+    }
+    
+    .visualization {
+      height: 120px;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 0.5rem;
+      position: relative;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+    
+    .waveform {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5px;
+      box-sizing: border-box;
+    }
+    
+    .waveform-bar {
+      flex: 1;
+      background-color: var(--accent);
+      margin: 0 1px;
+      height: 5%;
+      border-radius: 1px;
+      transition: height 0.1s ease;
+    }
+    
+    .stats-container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 1.5rem;
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: #aaa;
+      margin: 0;
+    }
+    
+    .progress-container {
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 0.5rem;
+      height: 0.5rem;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: var(--accent);
+      border-radius: 0.5rem;
+      transition: width 0.5s ease;
+    }
+    
+    .word {
+      display: inline-block;
+      margin: 0 0.25rem;
+      position: relative;
+    }
+    
+    .word.correct {
+      color: var(--success);
+    }
+    
+    .word.incorrect {
+      color: var(--error);
+    }
+    
+    .word.correct::after, .word.incorrect::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+    }
+    
+    .word.correct::after {
+      background-color: var(--success);
+    }
+    
+    .word.incorrect::after {
+      background-color: var(--error);
+    }
+    
+    .level-progress {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+    }
+    
+    .level-indicator {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      font-weight: 600;
+    }
+    
+    .level-indicator span {
+      color: var(--accent);
+    }
+    
+    @media (max-width: 768px) {
+      .control-row {
+        flex-direction: column;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .phrase {
+        font-size: 1.2rem;
+      }
+    }
+    
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .modal.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .modal-content {
+      background-color: var(--card);
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .modal.show .modal-content {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      line-height: 1;
+    }
+    
+    .match-percentage {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+    }
+    
+    .percentage-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>VoiceMatch</h1>
+      <p class="subtitle">The Future of Speech Recognition Gaming</p>
+    </header>
+    
+    <main class="game-container">
+      <div class="level-progress">
+        <div class="level-indicator">Level: <span id="currentLevel">1</span></div>
+        <div class="progress-container">
+          <div class="progress-bar" id="levelProgress"></div>
+        </div>
+      </div>
+      
+      <div class="difficulty">
+        <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+        <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+        <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+      </div>
+      
+      <div class="game-area">
+        <div class="phrase-container">
+          <p class="phrase" id="phraseDisplay">Click "New Phrase" to start the game</p>
+        </div>
+        
+        <div class="visualization">
+          <div class="waveform" id="waveform">
+            <!-- Bars will be generated by JS -->
+          </div>
+        </div>
+        
+        <div class="control-panel">
+          <div class="control-row">
+            <button id="newPhraseBtn">New Phrase</button>
+            <button id="listenBtn">Listen</button>
+          </div>
+          <button id="speakBtn">Hold to Speak</button>
+        </div>
+        
+        <div class="stats-container">
+          <div class="stat-item">
+            <div class="stat-value" id="totalScore">0</div>
+          <div class="stat-label">Total Score</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="avgAccuracy">0%</div>
+          <div class="stat-label">Avg. Accuracy</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="phraseCount">0</div>
+          <div class="stat-label">Phrases</div>
+        </div>
+      </div>
+        
+      <div class="results" id="resultsContainer">
+        <h3>Speech Analysis</h3>
+        <div class="score" id="accuracyScore">0%</div>
+        <div class="feedback" id="feedback">Complete a phrase to see your results</div>
+        <div id="wordComparison"></div>
+      </div>
+    </main>
+  </div>
+  
+  <div class="modal" id="levelUpModal">
+    <div class="modal-content">
+      <button class="close-modal" id="closeModal">×</button>
+      <h2>Level Up!</h2>
+      <p>Congratulations! You've advanced to Level <span id="newLevel">2</span>!</p>
+      <div class="match-percentage">
+        Your speech precision has improved to:
+        <div class="percentage-value" id="levelUpAccuracy">85%</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const phraseDisplay = document.getElementById('phraseDisplay');
+    const newPhraseBtn = document.getElementById('newPhraseBtn');
+    const listenBtn = document.getElementById('listenBtn');
+    const speakBtn = document.getElementById('speakBtn');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const accuracyScore = document.getElementById('accuracyScore');
+    const feedback = document.getElementById('feedback');
+    const wordComparison = document.getElementById('wordComparison');
+    const waveform = document.getElementById('waveform');
+    const totalScoreEl = document.getElementById('totalScore');
+    const avgAccuracyEl = document.getElementById('avgAccuracy');
+    const phraseCountEl = document.getElementById('phraseCount');
+    const currentLevelEl = document.getElementById('currentLevel');
+    const levelProgressEl = document.getElementById('levelProgress');
+    const levelUpModal = document.getElementById('levelUpModal');
+    const newLevelEl = document.getElementById('newLevel');
+    const levelUpAccuracyEl = document.getElementById('levelUpAccuracy');
+    const closeModal = document.getElementById('closeModal');
+    const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+
+    // Game variables
+    let currentPhrase = '';
+    let recognition;
+    let synth = window.speechSynthesis;
+    let totalScore = 0;
+    let totalAccuracy = 0;
+    let phraseCount = 0;
+    let currentLevel = 1;
+    let levelProgress = 0;
+    let difficulty = 'easy';
+    let waveformBars = [];
+    let isListening = false;
+    let waveformInterval;
+
+    // Phrases by difficulty
+    const phrases = {
+      easy: [
+        "The quick brown fox jumps over the lazy dog",
+        "All that glitters is not gold",
+        "Better late than never",
+        "Every cloud has a silver lining",
+        "Actions speak louder than words",
+        "Time flies when you're having fun",
+        "You can't judge a book by its cover"
+      ],
+      medium: [
+        "The early bird catches the worm, but the second mouse gets the cheese",
+        "We'll cross that bridge when we come to it",
+        "Curiosity killed the cat, but satisfaction brought it back",
+        "People who live in glass houses shouldn't throw stones",
+        "A journey of a thousand miles begins with a single step",
+        "The road to success is always under construction"
+      ],
+      hard: [
+        "She sells seashells by the seashore, but the shells she sells are not seashells I'm sure",
+        "How much wood would a woodchuck chuck if a woodchuck could chuck wood",
+        "Peter Piper picked a peck of pickled peppers",
+        "Unique New York, you know you need unique New York",
+        "Six slim slick slender saplings",
+        "Around the rugged rocks the ragged rascal ran"
+      ]
+    };
+
+    // Initialize waveform
+    function initWaveform() {
+      waveform.innerHTML = '';
+      waveformBars = [];
+      
+      for (let i = 0; i < 50; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'waveform-bar';
+        waveform.appendChild(bar);
+        waveformBars.push(bar);
+      }
+    }
+
+    // Animate waveform
+    function animateWaveform() {
+      clearInterval(waveformInterval);
+      
+      if (isListening) {
+        waveformInterval = setInterval(() => {
+          waveformBars.forEach(bar => {
+            const height = Math.random() * 80 + 5;
+            bar.style.height = `${height}%`;
+          });
+        }, 100);
+      } else {
+        waveformBars.forEach(bar => {
+          bar.style.height = '5%';
+        });
+      }
+    }
+
+    // Initialize speech recognition
+    function initSpeechRecognition() {
+      window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!window.SpeechRecognition) {
+        alert("Your browser doesn't support speech recognition. Try Chrome or Edge.");
+        return;
+      }
+      
+      recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      
+      recognition.onresult = (event) => {
+        const speechResult = event.results[0][0].transcript.trim().toLowerCase();
+        const targetPhrase = currentPhrase.toLowerCase();
+        
+        compareSpoken(targetPhrase, speechResult);
+      };
+      
+      recognition.onend = () => {
+        speakBtn.classList.remove('recording');
+        speakBtn.textContent = 'Hold to Speak';
+        isListening = false;
+        animateWaveform();
+      };
+      
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        speakBtn.classList.remove('recording');
+        speakBtn.textContent = 'Hold to Speak';
+        isListening = false;
+        animateWaveform();
+        
+        if (event.error === 'no-speech') {
+          feedback.textContent = "I didn't hear anything. Please try again.";
+        } else {
+          feedback.textContent = `Error: ${event.error}. Please try again.`;
+        }
+      };
+    }
+
+    // Generate new phrase
+    function getNewPhrase() {
+      const difficultyPhrases = phrases[difficulty];
+      const randomIndex = Math.floor(Math.random() * difficultyPhrases.length);
+      currentPhrase = difficultyPhrases[randomIndex];
+      
+      displayPhrase(currentPhrase);
+      resultsContainer.style.display = 'none';
+    }
+
+    // Display phrase
+    function displayPhrase(phrase) {
+      phraseDisplay.textContent = phrase;
+    }
+
+    // Text to speech
+    function speakPhrase() {
+      if (synth.speaking) {
+        synth.cancel();
+      }
+      
+      const utterance = new SpeechSynthesisUtterance(currentPhrase);
+      utterance.rate = 0.9;
+      synth.speak(utterance);
+    }
+
+    // Compare spoken text to target phrase
+    function compareSpoken(target, spoken) {
+      const targetWords = target.split(' ');
+      const spokenWords = spoken.split(' ');
+      
+      let correctWords = 0;
+      let wordComparisonHTML = '';
+      
+      const minLength = Math.min(targetWords.length, spokenWords.length);
+      
+      for (let i = 0; i < minLength; i++) {
+        if (targetWords[i] === spokenWords[i]) {
+          correctWords++;
+          wordComparisonHTML += `<span class="word correct">${targetWords[i]}</span> `;
+        } else {
+          wordComparisonHTML += `<span class="word incorrect">${targetWords[i]}</span> `;
+        }
+      }
+      
+      // Add remaining target words as incorrect
+      for (let i = minLength; i < targetWords.length; i++) {
+        wordComparisonHTML += `<span class="word incorrect">${targetWords[i]}</span> `;
+      }
+      
+      const accuracyPercentage = Math.round((correctWords / targetWords.length) *
+      100);
+      
+      // Update results display
+      accuracyScore.textContent = `${accuracyPercentage}%`;
+      wordComparison.innerHTML = wordComparisonHTML;
+      
+      // Provide feedback based on accuracy
+      if (accuracyPercentage >= 90) {
+        feedback.textContent = "Excellent! Your pronunciation is spot on!";
+        createConfetti();
+      } else if (accuracyPercentage >= 70) {
+        feedback.textContent = "Good job! Keep practicing for perfect pronunciation.";
+      } else if (accuracyPercentage >= 50) {
+        feedback.textContent = "Not bad. Try speaking more clearly and at a steady pace.";
+      } else {
+        feedback.textContent = "Keep practicing! Try speaking more slowly and clearly.";
+      }
+      
+      // Show results
+      resultsContainer.style.display = 'block';
+      
+      // Update stats
+      totalScore += accuracyPercentage;
+      phraseCount++;
+      totalAccuracy = Math.round(totalScore / phraseCount);
+      
+      totalScoreEl.textContent = totalScore;
+      avgAccuracyEl.textContent = `${totalAccuracy}%`;
+      phraseCountEl.textContent = phraseCount;
+      
+      // Update level progress
+      updateLevelProgress(accuracyPercentage);
+    }
+
+    // Update level progress
+    function updateLevelProgress(accuracyPercentage) {
+      // Different difficulty levels have different progress requirements
+      let progressIncrement;
+      
+      switch (difficulty) {
+        case 'easy':
+          progressIncrement = accuracyPercentage / 500; // Need ~5 good attempts to level up
+          break;
+        case 'medium':
+          progressIncrement = accuracyPercentage / 750; // Need ~7-8 good attempts to level up
+          break;
+        case 'hard':
+          progressIncrement = accuracyPercentage / 1000; // Need ~10 good attempts to level up
+          break;
+      }
+      
+      levelProgress += progressIncrement;
+      
+      if (levelProgress >= 1) {
+        // Level up!
+        currentLevel++;
+        levelProgress = 0;
+        currentLevelEl.textContent = currentLevel;
+        
+        // Show level up modal
+        newLevelEl.textContent = currentLevel;
+        levelUpAccuracyEl.textContent = `${totalAccuracy}%`;
+        levelUpModal.classList.add('show');
+      }
+      
+      // Update progress bar
+      levelProgressEl.style.width = `${levelProgress * 100}%`;
+    }
+
+    // Create confetti animation
+    function createConfetti() {
+      for (let i = 0; i < 30; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        
+        // Random position
+        confetti.style.left = `${Math.random() * 100}%`;
+        confetti.style.top = `${Math.random() * 100}%`;
+        
+        // Random color
+        const colors = ['#00e5ff', '#6e56cf', '#00e676', '#ff5252', '#ffeb3b'];
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // Random size
+        const size = Math.random() * 8 + 5;
+        confetti.style.width = `${size}px`;
+        confetti.style.height = `${size}px`;
+        
+        document.body.appendChild(confetti);
+        
+        // Animate
+        const animation = confetti.animate(
+          [
+            {
+              transform: `translate(0, 0) rotate(0deg)`,
+              opacity: 1
+            },
+            {
+              transform: `translate(${Math.random() * 300 - 150}px, ${Math.random() * 300}px) rotate(${Math.random() * 360}deg)`,
+              opacity: 0
+            }
+          ],
+          {
+            duration: 1500 + Math.random() * 1000,
+            easing: 'cubic-bezier(0,0.2,0.8,1)'
+          }
+        );
+        
+        animation.onfinish = () => {
+          confetti.remove();
+        };
+      }
+    }
+
+    // Set up event listeners
+    function setupEventListeners() {
+      // New phrase button
+      newPhraseBtn.addEventListener('click', getNewPhrase);
+      
+      // Listen button
+      listenBtn.addEventListener('click', () => {
+        if (currentPhrase) {
+          speakPhrase();
+        } else {
+          getNewPhrase();
+          setTimeout(speakPhrase, 500);
+        }
+      });
+      
+      // Speak button
+      speakBtn.addEventListener('mousedown', () => {
+        if (currentPhrase) {
+          speakBtn.textContent = 'Listening...';
+          speakBtn.classList.add('recording');
+          isListening = true;
+          animateWaveform();
+          recognition.start();
+        } else {
+          feedback.textContent = "Please get a new phrase first";
+        }
+      });
+      
+      // Close modal
+      closeModal.addEventListener('click', () => {
+        levelUpModal.classList.remove('show');
+      });
+      
+      // Difficulty buttons
+      difficultyBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          difficultyBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          difficulty = btn.dataset.difficulty;
+        });
+      });
+    }
+
+    // Initialize game
+    function initGame() {
+      initWaveform();
+      initSpeechRecognition();
+      setupEventListeners();
+    }
+
+    // Start the game when page loads
+    window.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>
